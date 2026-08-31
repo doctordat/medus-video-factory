@@ -1,69 +1,95 @@
 (() => {
   const generateBtn = document.getElementById('generate');
   const topicInput = document.getElementById('topic');
-  const stepList = document.getElementById('steplist');
-  const stepName = document.getElementById('stepname');
   const titleEl = document.getElementById('videoTitle');
-  const panel = document.querySelector('.panel');
+  const cards = document.getElementById('cards');
+  const canvas = document.querySelector('.canvas');
+  const originalSvg = canvas?.querySelector('svg');
+  const side = document.querySelector('.side');
+  const storyHead = document.querySelector('.storyhead');
+  const bar = document.getElementById('bar');
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  const play = document.getElementById('play');
+
+  let currentStoryboard = null;
+  let currentStep = 0;
 
   const status = document.createElement('div');
-  status.style.cssText = 'margin-top:12px;padding:10px 12px;border-radius:10px;background:#eef8f7;color:#0f6f70;font-size:12px;font-weight:700;display:none';
-  panel.insertBefore(status, stepName);
+  status.style.cssText = 'display:none;border:1px solid #cfe8e4;background:#eff9f7;color:#08766f;border-radius:10px;padding:10px 12px;font-size:12px;font-weight:800;line-height:1.4';
+  generateBtn.insertAdjacentElement('afterend', status);
 
-  const aiCard = document.createElement('div');
-  aiCard.id = 'ai-card';
-  aiCard.style.cssText = 'position:absolute;left:32px;right:32px;bottom:110px;z-index:8;background:rgba(251,250,246,.96);border:2px solid #111;border-radius:18px;padding:16px;box-shadow:5px 5px 0 #111;display:none';
-  document.querySelector('.phone').appendChild(aiCard);
+  const aiImage = document.createElement('img');
+  aiImage.alt = 'AI medical illustration';
+  aiImage.style.cssText = 'display:none;width:100%;height:100%;object-fit:contain;border-radius:14px;background:#fffdf8;animation:fadeIn .4s ease';
+  canvas.appendChild(aiImage);
 
-  const esc = (s) => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'display:none;position:absolute;left:18px;right:18px;bottom:18px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.92);border:1px solid #d9e2e8;box-shadow:0 8px 24px #102a4318;font-size:13px;line-height:1.4';
+  canvas.appendChild(overlay);
 
-  function showStatus(text, type='ok') {
+  const style = document.createElement('style');
+  style.textContent = '@keyframes fadeIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:scale(1)}}';
+  document.head.appendChild(style);
+
+  const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function setStatus(text, error=false) {
     status.style.display = 'block';
-    status.style.background = type === 'error' ? '#fff0ef' : '#eef8f7';
-    status.style.color = type === 'error' ? '#b42318' : '#0f6f70';
+    status.style.background = error ? '#fff1f0' : '#eff9f7';
+    status.style.color = error ? '#b42318' : '#08766f';
+    status.style.borderColor = error ? '#ffd0cc' : '#cfe8e4';
     status.textContent = text;
   }
 
+  function iconFor(action) {
+    return ({draw:'✎', highlight:'◉', arrow:'→', block:'✕', label:'T', result:'✓'})[action] || '•';
+  }
+
+  function renderStep(index) {
+    const steps = currentStoryboard?.steps || [];
+    if (!steps.length) return;
+    currentStep = Math.max(0, Math.min(index, steps.length - 1));
+    const s = steps[currentStep];
+    [...cards.children].forEach((el, i) => el.classList.toggle('active', i === currentStep));
+    overlay.style.display = 'block';
+    overlay.innerHTML = `<div style="font-size:10px;font-weight:900;color:#0d8b83;letter-spacing:.08em">BƯỚC ${currentStep + 1}/${steps.length}</div><div style="font-size:17px;font-weight:900;margin:3px 0">${esc(s.title)}</div><div style="color:#52606d">${esc(s.narration)}</div><div style="margin-top:7px;display:inline-block;background:#fff1aa;padding:4px 7px;border-radius:7px;font-weight:900">${esc(s.emphasis)}</div>`;
+    if (bar) bar.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+  }
+
   function renderStoryboard(data) {
-    const steps = Array.isArray(data.steps) ? data.steps : [];
-    titleEl.textContent = String(data.title || topicInput.value || '').toUpperCase();
-    stepList.innerHTML = steps.map((s, i) => `<div>${i + 1}. ${esc(s.title)}</div>`).join('');
-    stepName.textContent = `AI storyboard · ${steps.length} bước`;
+    currentStoryboard = data;
+    currentStep = 0;
+    const steps = data.steps || [];
+    titleEl.textContent = String(data.title || topicInput.value).toUpperCase();
+    if (storyHead) storyHead.textContent = `CÁC BƯỚC VẼ (${steps.length}/${steps.length})`;
+    cards.innerHTML = steps.map((s, i) => `<div class="card${i===0?' active':''}" data-i="${i}"><span class="num">${i+1}</span><div class="thumb">${iconFor(s.action)}</div><div class="ct">${esc(s.title)}</div></div>`).join('');
+    [...cards.children].forEach(el => el.onclick = () => renderStep(Number(el.dataset.i)));
+    renderStep(0);
+  }
 
-    aiCard.style.display = 'block';
-    aiCard.innerHTML = `
-      <div style="font-size:11px;font-weight:900;color:#0f8b8d;letter-spacing:.08em">AI STORYBOARD</div>
-      <div style="font-size:22px;font-weight:900;margin:5px 0 8px">${esc(data.hook || data.title)}</div>
-      <div style="font-size:13px;line-height:1.45;color:#333">${esc(steps[0]?.visual || '')}</div>
-      <div style="margin-top:10px;background:#fff0a8;display:inline-block;padding:6px 9px;border-radius:8px;font-size:13px;font-weight:900">${esc(steps[0]?.emphasis || '')}</div>`;
-
-    let idx = 0;
-    const controls = {
-      next: document.getElementById('next'),
-      prev: document.getElementById('prev')
-    };
-    const renderAiStep = () => {
-      if (!steps.length) return;
-      const s = steps[idx];
-      [...stepList.children].forEach((el, i) => el.classList.toggle('active', i === idx));
-      stepName.textContent = `Bước ${idx + 1} · ${s.title}`;
-      aiCard.innerHTML = `
-        <div style="font-size:11px;font-weight:900;color:#0f8b8d;letter-spacing:.08em">BƯỚC ${idx + 1}/${steps.length} · ${esc(s.action)}</div>
-        <div style="font-size:21px;font-weight:900;margin:5px 0 8px">${esc(s.title)}</div>
-        <div style="font-size:13px;line-height:1.45;color:#333">${esc(s.visual)}</div>
-        <div style="margin-top:10px;background:#fff0a8;display:inline-block;padding:6px 9px;border-radius:8px;font-size:13px;font-weight:900">${esc(s.emphasis)}</div>`;
-    };
-    controls.next.onclick = () => { idx = Math.min(steps.length - 1, idx + 1); renderAiStep(); };
-    controls.prev.onclick = () => { idx = Math.max(0, idx - 1); renderAiStep(); };
-    renderAiStep();
+  async function generateIllustration(topic, storyboard) {
+    setStatus('Storyboard xong. AI đang vẽ hình y khoa…');
+    const r = await fetch('/api/illustrate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({topic, storyboard})
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Không tạo được hình AI');
+    if (originalSvg) originalSvg.style.display = 'none';
+    aiImage.src = data.image;
+    aiImage.style.display = 'block';
+    overlay.style.display = 'block';
   }
 
   generateBtn.onclick = async () => {
     const topic = topicInput.value.trim();
-    if (!topic) return showStatus('Nhập chủ đề trước đã.', 'error');
+    if (!topic) return setStatus('Nhập chủ đề trước đã.', true);
+
     generateBtn.disabled = true;
-    generateBtn.textContent = 'AI đang tạo storyboard…';
-    showStatus('Đang gửi chủ đề cho AI và chia thành các bước vẽ…');
+    generateBtn.textContent = 'AI đang làm…';
+    setStatus('AI đang tạo kịch bản + storyboard…');
 
     try {
       const r = await fetch('/api/generate', {
@@ -71,17 +97,35 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({topic})
       });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'Generate failed');
-      renderStoryboard(data);
-      showStatus(`Đã tạo ${data.steps?.length || 0} bước bằng AI.`);
+      const storyboard = await r.json();
+      if (!r.ok) throw new Error(storyboard.error || 'Không tạo được storyboard');
+      renderStoryboard(storyboard);
+      await generateIllustration(topic, storyboard);
+      setStatus(`Xong: ${storyboard.steps?.length || 0} bước + 1 hình AI mới cho “${topic}”.`);
     } catch (e) {
-      showStatus(e.message || 'Không gọi được AI.', 'error');
+      setStatus(e.message || 'Generate thất bại.', true);
     } finally {
       generateBtn.disabled = false;
-      generateBtn.textContent = '✨ Generate bằng AI';
+      generateBtn.textContent = '✦ Generate bằng AI';
     }
   };
 
-  generateBtn.textContent = '✨ Generate bằng AI';
+  if (prev) prev.onclick = () => renderStep(currentStep - 1);
+  if (next) next.onclick = () => renderStep(currentStep + 1);
+  if (play) play.onclick = () => {
+    if (!currentStoryboard?.steps?.length) return;
+    let i = currentStep;
+    play.textContent = '⏸ Pause';
+    const timer = setInterval(() => {
+      i += 1;
+      if (i >= currentStoryboard.steps.length) {
+        clearInterval(timer);
+        play.textContent = '▶ Play';
+        return;
+      }
+      renderStep(i);
+    }, 1600);
+  };
+
+  generateBtn.textContent = '✦ Generate bằng AI';
 })();
