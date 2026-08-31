@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "remotion studio src/index.ts",
-    "build": "mkdir -p dist && cp index.html app.js dist/ && sed -i 's#</body>#<script src=\"/app.js\"></script></body>#' dist/index.html",
+    "build": "mkdir -p dist && cp index.html app.js assets-premium.js dist/ && sed -i 's#</body>#<script src=\"/assets-premium.js\"></script><script src=\"/app.js\"></script></body>#' dist/index.html",
     "render": "remotion render src/index.ts",
     "render:aspirin": "remotion render src/index.ts AspirinShort out/aspirin.mp4"
   },
