@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "remotion studio src/index.ts",
+    "build": "mkdir -p dist && cp index.html dist/index.html",
     "render": "remotion render src/index.ts",
     "render:aspirin": "remotion render src/index.ts AspirinShort out/aspirin.mp4"
   },
