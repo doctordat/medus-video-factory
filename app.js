@@ -1,112 +1,47 @@
 (() => {
-  const $ = (s) => document.querySelector(s);
-  const generateBtn = $('#generate');
-  const topicInput = $('#topic');
-  const titleEl = $('#videoTitle');
-  const canvas = $('.canvas');
-  const cards = $('#cards');
-  const bar = $('#bar');
-  const storyHead = $('.storyhead');
-  const prevBtn = $('#prev');
-  const nextBtn = $('#next');
-  const playBtn = $('#play');
-  const side = $('.side');
-
-  const status = document.createElement('div');
-  status.style.cssText='padding:10px 12px;border:1px solid #dfe5ea;border-radius:10px;background:#eef8f7;color:#0b726c;font-size:12px;font-weight:800';
-  status.textContent='FREE MODE · SVG asset library · không gọi AI tạo ảnh';
-  side.insertBefore(status, side.querySelector('.status'));
-
-  const esc=(s)=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const baseStyle = `<style>
-    .sk{fill:none;stroke:#17222b;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.thin{stroke-width:3}.red{stroke:#d9433c}.blue{stroke:#2869b3}.green{stroke:#2f8f46}.teal{stroke:#0d8b83}.tan{stroke:#c9a789}.fillY{fill:#fff1ad}.fillG{fill:#eaf7e8}.fillB{fill:#e9f3ff}.fillR{fill:#ffe8e5}.box{stroke:#17222b;stroke-width:2}.txt{font:800 22px Inter,Arial,sans-serif;fill:#17222b}.sm{font-size:17px}.redT{fill:#d9433c}.blueT{fill:#2869b3}.greenT{fill:#2f8f46}.step{opacity:0;transition:opacity .3s}.step.visible{opacity:1}.draw{stroke-dasharray:1;stroke-dashoffset:1;path-length:1;transition:stroke-dashoffset .9s ease}.step.visible .draw{stroke-dashoffset:0}
-  </style>`;
-
-  const templates = {
-    furosemide: {
-      title:'CƠ CHẾ FUROSEMIDE',
-      steps:['Cấu trúc nephron','Xác định quai Henle','NKCC2 ở nhánh lên dày','Furosemide chặn NKCC2','↓ tái hấp thu ion','H₂O đi theo','↑ lượng nước tiểu','Ứng dụng lâm sàng'],
-      thumbs:['〽','∪','▣','✕','↓','H₂O','↑','★'],
-      svg:`${baseStyle}<svg viewBox="0 0 900 560">
-        <g class="step" data-step="0"><circle cx="205" cy="120" r="48" class="sk tan draw" pathLength="1"/><path class="sk red draw" pathLength="1" d="M90 110 C130 90 165 100 175 115 M185 92 C208 70 240 85 250 110 C258 134 231 153 207 148 C184 143 175 122 188 108 C200 96 220 101 224 115"/><path class="sk tan draw" pathLength="1" d="M253 122 C318 90 348 111 338 165 C328 215 310 242 340 258 C356 342 359 411 402 447 C433 473 467 445 473 403 C479 321 474 252 510 220 C545 189 566 160 541 139 C515 117 485 148 456 139 C429 130 441 106 470 101 C531 92 579 135 630 119 C661 109 685 108 688 135 L688 420"/><text x="164" y="48" class="txt redT">Cầu thận</text><text x="373" y="505" class="txt blueT">Quai Henle</text><text x="652" y="72" class="txt blueT">Ống góp</text></g>
-        <g class="step" data-step="1"><path class="sk blue draw" pathLength="1" stroke-width="13" d="M340 260 C352 344 358 410 402 447"/><path class="sk red draw" pathLength="1" stroke-width="13" d="M402 447 C442 467 467 442 473 403 C478 342 477 294 487 258"/><text x="310" y="535" class="txt sm blueT">Nhánh xuống</text><text x="482" y="535" class="txt sm redT">Nhánh lên dày</text></g>
-        <g class="step" data-step="2"><rect x="443" y="293" width="92" height="44" rx="10" class="fillY box"/><text x="489" y="321" text-anchor="middle" class="txt sm">NKCC2</text><text x="548" y="300" class="txt sm">Na⁺ K⁺ 2Cl⁻</text></g>
-        <g class="step" data-step="3"><rect x="270" y="240" width="135" height="44" rx="9" class="fillG box"/><text x="337" y="268" text-anchor="middle" class="txt sm greenT">FUROSEMIDE</text><path class="sk green draw" pathLength="1" d="M405 262 C430 263 445 278 458 295"/><path class="sk red" stroke-width="10" d="M458 302 L521 332 M521 302 L458 332"/></g>
-        <g class="step" data-step="4"><path class="sk blue draw" pathLength="1" d="M535 345 L590 345 M573 331 L591 345 L573 359"/><text x="600" y="342" class="txt sm blueT">↓ tái hấp thu Na⁺, K⁺, Cl⁻</text></g>
-        <g class="step" data-step="5"><path class="sk teal draw" pathLength="1" d="M535 389 C590 405 632 405 678 388 M660 377 L680 388 L660 400"/><text x="575" y="430" class="txt sm blueT">H₂O đi theo</text></g>
-        <g class="step" data-step="6"><rect x="665" y="445" width="190" height="58" rx="10" class="fillG box"/><text x="760" y="480" text-anchor="middle" class="txt sm greenT">↑ LƯỢNG NƯỚC TIỂU</text></g>
-        <g class="step" data-step="7"><text x="86" y="485" class="txt sm greenT">★ Phù · tăng huyết áp · phù phổi cấp</text></g>
-      </svg>`
-    },
-    aspirin: {
-      title:'CƠ CHẾ ASPIRIN',
-      steps:['Tiểu cầu và COX-1','Arachidonic acid','Tạo thromboxane A₂','Aspirin acetyl hóa COX-1','Ức chế không hồi phục','↓ TXA₂','↓ kết tập tiểu cầu','Clinical pearl'],
-      thumbs:['◉','→','TXA₂','A','✕','↓','↓','★'],
-      svg:`${baseStyle}<svg viewBox="0 0 900 560">
-        <g class="step" data-step="0"><circle cx="285" cy="280" r="145" class="fillR box"/><circle cx="245" cy="250" r="18" fill="#e8897f"/><circle cx="320" cy="320" r="22" fill="#e8897f"/><circle cx="355" cy="230" r="16" fill="#e8897f"/><text x="285" y="95" text-anchor="middle" class="txt redT">TIỂU CẦU</text><rect x="390" y="250" width="115" height="60" rx="14" class="fillY box"/><text x="447" y="287" text-anchor="middle" class="txt">COX-1</text></g>
-        <g class="step" data-step="1"><text x="90" y="220" class="txt sm">Arachidonic acid</text><path class="sk draw" pathLength="1" d="M225 225 C290 185 350 205 392 255"/></g>
-        <g class="step" data-step="2"><path class="sk blue draw" pathLength="1" d="M505 280 L640 280 M620 264 L642 280 L620 296"/><rect x="645" y="245" width="135" height="70" rx="14" class="fillB box"/><text x="712" y="287" text-anchor="middle" class="txt blueT">TXA₂</text></g>
-        <g class="step" data-step="3"><rect x="370" y="120" width="150" height="54" rx="12" class="fillG box"/><text x="445" y="154" text-anchor="middle" class="txt sm greenT">ASPIRIN</text><path class="sk green draw" pathLength="1" d="M445 174 L445 245"/></g>
-        <g class="step" data-step="4"><path class="sk red" stroke-width="10" d="M405 250 L490 310 M490 250 L405 310"/><text x="365" y="350" class="txt sm redT">Ức chế không hồi phục</text></g>
-        <g class="step" data-step="5"><text x="650" y="350" class="txt blueT">TXA₂ ↓</text></g>
-        <g class="step" data-step="6"><path class="sk blue draw" pathLength="1" d="M640 385 L640 445 M624 425 L640 447 L656 425"/><text x="555" y="480" class="txt blueT">↓ KẾT TẬP TIỂU CẦU</text></g>
-        <g class="step" data-step="7"><text x="95" y="500" class="txt sm greenT">★ Tác dụng kéo dài suốt đời tiểu cầu</text></g>
-      </svg>`
-    },
-    metformin: {
-      title:'CƠ CHẾ METFORMIN',
-      steps:['Gan là đích chính','Metformin vào tế bào gan','Ức chế hô hấp ty thể','AMP tăng','AMPK được hoạt hóa','↓ tân tạo đường','↑ nhạy insulin ngoại biên','Kết quả'],
-      thumbs:['LIVER','M','⚡','AMP','AMPK','↓','↑','✓'],
-      svg:`${baseStyle}<svg viewBox="0 0 900 560">
-        <g class="step" data-step="0"><path class="sk tan draw" pathLength="1" d="M170 175 C265 90 430 105 500 170 C555 222 527 302 455 330 C365 365 230 342 162 287 C112 247 120 210 170 175 Z"/><text x="300" y="215" class="txt redT">GAN</text></g>
-        <g class="step" data-step="1"><rect x="70" y="365" width="150" height="54" rx="12" class="fillG box"/><text x="145" y="399" text-anchor="middle" class="txt sm greenT">METFORMIN</text><path class="sk green draw" pathLength="1" d="M220 392 C280 390 305 340 330 305"/></g>
-        <g class="step" data-step="2"><ellipse cx="410" cy="245" rx="75" ry="38" class="fillR box"/><path class="sk red thin" d="M355 245 C375 220 395 270 415 240 C435 210 455 265 475 238"/><text x="410" y="300" text-anchor="middle" class="txt sm redT">Ty thể ↓</text></g>
-        <g class="step" data-step="3"><path class="sk blue draw" pathLength="1" d="M500 245 L620 245 M600 230 L622 245 L600 260"/><text x="650" y="252" class="txt blueT">AMP ↑</text></g>
-        <g class="step" data-step="4"><rect x="605" y="300" width="150" height="58" rx="12" class="fillY box"/><text x="680" y="336" text-anchor="middle" class="txt">AMPK ↑</text></g>
-        <g class="step" data-step="5"><path class="sk blue draw" pathLength="1" d="M680 358 L680 420"/><text x="555" y="458" class="txt blueT">↓ TÂN TẠO ĐƯỜNG</text></g>
-        <g class="step" data-step="6"><text x="100" y="485" class="txt greenT">↑ NHẠY INSULIN</text></g>
-        <g class="step" data-step="7"><rect x="590" y="475" width="220" height="55" rx="10" class="fillG box"/><text x="700" y="510" text-anchor="middle" class="txt sm greenT">↓ glucose máu</text></g>
-      </svg>`
-    },
-    paracetamol: {
-      title:'CƠ CHẾ PARACETAMOL',
-      steps:['Tín hiệu gây sốt','COX ở hệ thần kinh trung ương','PGE₂ tăng set-point','Paracetamol tác động trung ương','↓ tổng hợp PGE₂','Set-point trở về','Tăng thải nhiệt','Hạ sốt'],
-      thumbs:['🔥','COX','PGE₂','P','↓','↘','💧','✓'],
-      svg:`${baseStyle}<svg viewBox="0 0 900 560">
-        <g class="step" data-step="0"><circle cx="270" cy="250" r="120" class="fillR box"/><text x="270" y="258" text-anchor="middle" class="txt redT">VÙNG HẠ ĐỒI</text><text x="125" y="110" class="txt redT">IL-1 / IL-6 / TNF-α</text><path class="sk red draw" pathLength="1" d="M240 125 L255 165"/></g>
-        <g class="step" data-step="1"><rect x="420" y="180" width="120" height="56" rx="12" class="fillY box"/><text x="480" y="216" text-anchor="middle" class="txt">COX</text></g>
-        <g class="step" data-step="2"><path class="sk blue draw" pathLength="1" d="M540 208 L660 208"/><text x="690" y="216" class="txt blueT">PGE₂ ↑</text><text x="610" y="260" class="txt sm redT">set-point ↑</text></g>
-        <g class="step" data-step="3"><rect x="405" y="315" width="175" height="58" rx="12" class="fillG box"/><text x="492" y="350" text-anchor="middle" class="txt sm greenT">PARACETAMOL</text><path class="sk green draw" pathLength="1" d="M492 315 L492 240"/></g>
-        <g class="step" data-step="4"><path class="sk red" stroke-width="10" d="M445 185 L525 235 M525 185 L445 235"/><text x="610" y="335" class="txt blueT">PGE₂ ↓</text></g>
-        <g class="step" data-step="5"><text x="590" y="395" class="txt greenT">set-point ↘ bình thường</text></g>
-        <g class="step" data-step="6"><path class="sk teal draw" pathLength="1" d="M260 390 C260 440 230 465 180 480 M285 390 C305 440 350 470 405 480"/><text x="180" y="515" class="txt sm blueT">giãn mạch · vã mồ hôi</text></g>
-        <g class="step" data-step="7"><rect x="600" y="455" width="180" height="55" rx="10" class="fillG box"/><text x="690" y="490" text-anchor="middle" class="txt greenT">HẠ SỐT</text></g>
-      </svg>`
-    }
+  const $=(s)=>document.querySelector(s), btn=$('#generate'), input=$('#topic'), title=$('#videoTitle'), canvas=$('.canvas'), cards=$('#cards'), bar=$('#bar'), head=$('.storyhead'), prev=$('#prev'), next=$('#next'), play=$('#play'), side=$('.side');
+  const status=document.createElement('div'); status.style.cssText='padding:10px 12px;border:1px solid #bfe6df;border-radius:10px;background:#eefaf7;color:#08766f;font-size:12px;font-weight:800'; status.textContent='FREE ENGINE · 16 medical SVG assets · auto-layout'; side.insertBefore(status,side.querySelector('.status'));
+  const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  const style=`<style>.sk{fill:none;stroke:#17222b;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.red{stroke:#d9433c}.blue{stroke:#2869b3}.green{stroke:#2f8f46}.teal{stroke:#0d8b83}.fillY{fill:#fff1ad}.fillG{fill:#eaf7e8}.fillB{fill:#e9f3ff}.fillR{fill:#ffe8e5}.box{stroke:#17222b;stroke-width:2}.txt{font:800 22px Inter,Arial,sans-serif;fill:#17222b}.sm{font-size:17px}.redT{fill:#d9433c}.blueT{fill:#2869b3}.greenT{fill:#2f8f46}.step{opacity:0;transition:.3s}.step.visible{opacity:1}.draw{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .8s ease}.step.visible .draw{stroke-dashoffset:0}</style>`;
+  const A={
+    liver:`<path class="sk draw" pathLength="1" d="M-110 -25 C-55 -92 70 -80 112 -20 C135 22 92 62 25 68 C-50 74 -125 38 -110 -25Z"/><text class="txt redT" x="0" y="10" text-anchor="middle">GAN</text>`,
+    kidney:`<path class="sk draw" pathLength="1" d="M-15 -75 C70 -85 105 -5 70 55 C42 105 -35 92 -58 40 C-78 -5 -65 -62 -15 -75Z"/><path class="sk red draw" pathLength="1" d="M45 -10 C15 0 10 28 32 48"/><text class="txt blueT" x="0" y="125" text-anchor="middle">THẬN</text>`,
+    heart:`<path class="sk red draw" pathLength="1" d="M0 80 C-100 20 -105 -55 -50 -70 C-15 -80 0 -45 0 -25 C0 -45 20 -80 55 -68 C112 -48 92 24 0 80Z"/><text class="txt redT" x="0" y="120" text-anchor="middle">TIM</text>`,
+    lungs:`<path class="sk blue draw" pathLength="1" d="M0 -90 L0 -25 M0 -25 L-32 5 M0 -25 L32 5 M-32 5 C-85 -10 -110 45 -85 92 C-60 130 -12 95 -10 35 M32 5 C85 -10 110 45 85 92 C60 130 12 95 10 35"/><text class="txt blueT" x="0" y="140" text-anchor="middle">PHỔI</text>`,
+    brain:`<path class="sk draw" pathLength="1" d="M-90 20 C-120 -30 -75 -70 -38 -55 C-25 -92 25 -92 38 -55 C80 -75 115 -30 88 5 C120 42 75 82 42 62 C18 98 -28 88 -35 60 C-78 82 -112 52 -90 20Z"/><text class="txt" x="0" y="125" text-anchor="middle">NÃO</text>`,
+    cell:`<circle class="sk teal draw" pathLength="1" r="105"/><circle class="sk blue draw" pathLength="1" r="38"/><text class="txt blueT" y="8" text-anchor="middle">TẾ BÀO</text>`,
+    mitochondria:`<ellipse class="sk red draw fillR" pathLength="1" rx="90" ry="45"/><path class="sk red draw" pathLength="1" d="M-70 0 C-45 -35 -25 35 0 0 C25 -35 45 35 70 0"/><text class="txt sm redT" y="80" text-anchor="middle">TY THỂ</text>`,
+    bacteria:`<rect class="sk green draw fillG" pathLength="1" x="-90" y="-42" width="180" height="84" rx="42"/><path class="sk green draw" pathLength="1" d="M-70 -45 C-100 -85 -120 -55 -105 -20 M72 45 C105 80 120 48 105 20"/><text class="txt sm greenT" y="8" text-anchor="middle">VI KHUẨN</text>`,
+    dna:`<path class="sk blue draw" pathLength="1" d="M-70 -85 C70 -45 -70 45 70 85 M70 -85 C-70 -45 70 45 -70 85 M-48 -62 L48 -62 M-35 -30 L35 -30 M-35 30 L35 30 M-48 62 L48 62"/><text class="txt sm blueT" y="125" text-anchor="middle">DNA</text>`,
+    receptor:`<path class="sk teal draw" pathLength="1" d="M-85 55 L-85 -10 C-60 -10 -55 -55 -30 -55 C-5 -55 0 -10 25 -10 C50 -10 55 -55 80 -55 L80 55"/><text class="txt sm" y="95" text-anchor="middle">RECEPTOR</text>`,
+    enzyme:`<path class="sk draw fillY" pathLength="1" d="M-90 35 C-115 -35 -50 -82 5 -48 C25 -88 95 -62 90 -5 C85 55 15 78 -25 52 C-50 82 -78 68 -90 35Z"/><text class="txt sm" y="8" text-anchor="middle">ENZYME</text>`,
+    ribosome:`<ellipse class="sk blue draw fillB" pathLength="1" cy="18" rx="90" ry="48"/><ellipse class="sk blue draw fillB" pathLength="1" cy="-30" rx="65" ry="38"/><text class="txt sm blueT" y="100" text-anchor="middle">RIBOSOME</text>`,
+    platelet:`<circle class="sk red draw fillR" pathLength="1" r="82"/><circle cx="-22" cy="-15" r="10" fill="#df7770"/><circle cx="30" cy="18" r="13" fill="#df7770"/><text class="txt sm redT" y="120" text-anchor="middle">TIỂU CẦU</text>`,
+    neuron:`<circle class="sk blue draw fillB" pathLength="1" r="45"/><path class="sk blue draw" pathLength="1" d="M40 5 C100 0 145 30 205 10 M-35 -25 L-90 -70 M-42 12 L-110 30 M-22 38 L-65 95"/><text class="txt sm blueT" y="130" text-anchor="middle">NEURON</text>`,
+    membrane:`<path class="sk teal draw" pathLength="1" d="M-120 -18 L120 -18 M-120 18 L120 18"/><g fill="#0d8b83">${[-100,-70,-40,-10,20,50,80,110].map(x=>`<circle cx="${x}" cy="-18" r="7"/><circle cx="${x}" cy="18" r="7"/>`).join('')}</g><text class="txt sm" y="70" text-anchor="middle">MÀNG TẾ BÀO</text>`,
+    nephron:`<circle class="sk red draw" pathLength="1" cx="-90" cy="-55" r="38"/><path class="sk blue draw" pathLength="1" d="M-52 -55 C5 -90 45 -55 20 0 C0 45 15 105 60 115 C100 122 105 65 102 15 C100 -25 130 -55 165 -45"/><text class="txt sm blueT" y="155" text-anchor="middle">NEPHRON</text>`
   };
-
-  function genericTemplate(topic){
-    const clean=topic.replace(/^cơ chế\s*/i,'').trim()||'THUỐC';
-    return {title:`CƠ CHẾ ${clean.toUpperCase()}`,steps:['Xác định đích tác dụng','Thuốc tiếp cận đích','Tương tác thuốc–đích','Thay đổi tín hiệu','Thay đổi chức năng tế bào','Tác dụng sinh lý','Kết quả lâm sàng'],thumbs:['◎','→','▣','⇄','CELL','↓','✓'],svg:`${baseStyle}<svg viewBox="0 0 900 560">
-      <g class="step" data-step="0"><circle cx="620" cy="270" r="125" class="fillB box"/><text x="620" y="278" text-anchor="middle" class="txt">TẾ BÀO ĐÍCH</text><rect x="535" y="215" width="75" height="38" rx="10" class="fillY box"/><text x="572" y="240" text-anchor="middle" class="txt sm">ĐÍCH</text></g>
-      <g class="step" data-step="1"><rect x="110" y="235" width="170" height="60" rx="12" class="fillG box"/><text x="195" y="272" text-anchor="middle" class="txt sm greenT">${esc(clean.toUpperCase())}</text><path class="sk green draw" pathLength="1" d="M280 265 C370 265 430 245 535 235"/></g>
-      <g class="step" data-step="2"><path class="sk red" stroke-width="9" d="M520 215 L615 260 M615 215 L520 260"/></g>
-      <g class="step" data-step="3"><path class="sk blue draw" pathLength="1" d="M620 305 L620 390"/><text x="645" y="355" class="txt sm blueT">tín hiệu ↓/↑</text></g>
-      <g class="step" data-step="4"><circle cx="620" cy="420" r="38" class="fillY box"/><text x="620" y="428" text-anchor="middle" class="txt sm">CELL</text></g>
-      <g class="step" data-step="5"><path class="sk teal draw" pathLength="1" d="M585 455 C535 490 465 500 390 490"/><text x="185" y="500" class="txt sm blueT">Thay đổi đáp ứng sinh lý</text></g>
-      <g class="step" data-step="6"><rect x="605" y="470" width="195" height="55" rx="10" class="fillG box"/><text x="702" y="505" text-anchor="middle" class="txt sm greenT">KẾT QUẢ LÂM SÀNG</text></g>
-    </svg>`};
-  }
-
-  function choose(topic){const t=topic.toLowerCase();if(t.includes('furosemide')||t.includes('lợi tiểu quai'))return templates.furosemide;if(t.includes('aspirin'))return templates.aspirin;if(t.includes('metformin'))return templates.metformin;if(t.includes('paracetamol')||t.includes('acetaminophen'))return templates.paracetamol;return genericTemplate(topic);}
-
-  let tpl=templates.furosemide,current=0,timer=null;
-  function renderStep(n){const nodes=[...canvas.querySelectorAll('.step')];current=Math.max(0,Math.min(nodes.length-1,n));nodes.forEach((el,i)=>el.classList.toggle('visible',i<=current));[...cards.querySelectorAll('.card')].forEach((el,i)=>el.classList.toggle('active',i===current));if(bar)bar.style.width=`${((current+1)/nodes.length)*100}%`;}
-  function renderTemplate(t){tpl=t;titleEl.textContent=t.title;canvas.innerHTML=t.svg;cards.innerHTML=t.steps.map((s,i)=>`<div class="card" data-i="${i}"><span class="num">${i+1}</span><div class="thumb">${esc(t.thumbs[i]||'•')}</div><div class="ct">${esc(s)}</div></div>`).join('');storyHead.textContent=`CÁC BƯỚC VẼ (${t.steps.length}/${t.steps.length})`;cards.querySelectorAll('.card').forEach(c=>c.onclick=()=>{stop();renderStep(+c.dataset.i)});renderStep(0);}
-  function stop(){if(timer){clearInterval(timer);timer=null}playBtn.textContent='▶ Play'}
-  generateBtn.onclick=()=>{stop();const topic=topicInput.value.trim();tpl=choose(topic);renderTemplate(tpl);status.textContent='✓ FREE MODE · Đã ráp visual từ thư viện SVG cục bộ';};
-  prevBtn.onclick=()=>{stop();renderStep(current-1)};nextBtn.onclick=()=>{stop();renderStep(current+1)};
-  playBtn.onclick=()=>{if(timer){stop();return}if(current>=tpl.steps.length-1)renderStep(0);playBtn.textContent='⏸ Pause';timer=setInterval(()=>{if(current>=tpl.steps.length-1){stop();return}renderStep(current+1)},1300)};
-  generateBtn.textContent='⚡ Generate FREE';
-  renderTemplate(tpl);
+  const rules=[
+    {k:['furosemide','lợi tiểu','quai henle','nkcc'],assets:['nephron','kidney'],target:'NKCC2',effect:'↓ tái hấp thu Na⁺ K⁺ Cl⁻',result:'↑ NƯỚC TIỂU'},
+    {k:['aspirin','kháng kết tập','cox-1','thromboxane'],assets:['platelet','enzyme'],target:'COX-1',effect:'↓ TXA₂',result:'↓ KẾT TẬP TIỂU CẦU'},
+    {k:['metformin'],assets:['liver','mitochondria'],target:'AMPK',effect:'↓ tân tạo đường',result:'↓ GLUCOSE MÁU'},
+    {k:['paracetamol','acetaminophen','hạ sốt'],assets:['brain','enzyme'],target:'COX / PGE₂',effect:'↓ PGE₂ trung ương',result:'↓ SET-POINT'},
+    {k:['beta blocker','propranolol','metoprolol'],assets:['heart','receptor'],target:'β-RECEPTOR',effect:'↓ cAMP',result:'↓ NHỊP TIM'},
+    {k:['ace inhibitor','enalapril','captopril'],assets:['kidney','enzyme'],target:'ACE',effect:'↓ Angiotensin II',result:'↓ HUYẾT ÁP'},
+    {k:['salbutamol','albuterol','beta2'],assets:['lungs','receptor'],target:'β₂-RECEPTOR',effect:'↑ cAMP',result:'GIÃN PHẾ QUẢN'},
+    {k:['omeprazole','ppi','bơm proton'],assets:['cell','membrane'],target:'H⁺/K⁺ ATPase',effect:'↓ tiết H⁺',result:'↓ ACID DẠ DÀY'},
+    {k:['statin','atorvastatin','rosuvastatin'],assets:['liver','enzyme'],target:'HMG-CoA reductase',effect:'↓ tổng hợp cholesterol',result:'↓ LDL-C'},
+    {k:['penicillin','amoxicillin','cephalosporin'],assets:['bacteria','enzyme'],target:'PBP',effect:'↓ thành tế bào',result:'LY GIẢI VI KHUẨN'},
+    {k:['macrolide','azithromycin','clarithromycin'],assets:['bacteria','ribosome'],target:'50S',effect:'↓ tổng hợp protein',result:'KÌM KHUẨN'},
+    {k:['fluoroquinolone','ciprofloxacin','levofloxacin'],assets:['bacteria','dna'],target:'DNA gyrase',effect:'↓ sao chép DNA',result:'DIỆT KHUẨN'},
+    {k:['insulin'],assets:['cell','receptor'],target:'Insulin receptor',effect:'↑ GLUT4',result:'↑ THU NẠP GLUCOSE'},
+    {k:['ssri','sertraline','fluoxetine'],assets:['neuron','receptor'],target:'SERT',effect:'↓ tái thu hồi 5-HT',result:'↑ SEROTONIN KHE SYNAP'}
+  ];
+  function choose(q){q=q.toLowerCase();return rules.find(r=>r.k.some(k=>q.includes(k)))||{assets:['cell','receptor'],target:'ĐÍCH TÁC DỤNG',effect:'Thay đổi tín hiệu',result:'HIỆU QUẢ DƯỢC LÝ'};}
+  function plan(topic){const r=choose(topic), drug=topic.replace(/cơ chế/ig,'').trim()||'THUỐC'; const steps=['Xác định cơ quan / tế bào đích',`Đưa ${drug} vào sơ đồ`,`Xác định ${r.target}`,`${drug} tác động lên ${r.target}`,r.effect,'Lan truyền tín hiệu','Tạo đáp ứng sinh lý',r.result]; return {title:`CƠ CHẾ ${drug.toUpperCase()}`,steps,thumbs:['◎','Rx','▣','✕','↓','→','⚡','✓'],r,drug};}
+  function svg(p){const [a,b]=p.r.assets; return `${style}<svg viewBox="0 0 900 560"><g class="step" data-step="0" transform="translate(255 270)">${A[a]}</g><g class="step" data-step="1"><rect x="85" y="75" width="210" height="58" rx="13" class="fillG box"/><text x="190" y="112" text-anchor="middle" class="txt sm greenT">${esc(p.drug.toUpperCase())}</text><path class="sk green draw" pathLength="1" d="M295 105 C350 105 375 155 400 205"/></g><g class="step" data-step="2" transform="translate(610 225)">${A[b]}</g><g class="step" data-step="3"><rect x="520" y="345" width="220" height="58" rx="12" class="fillY box"/><text x="630" y="381" text-anchor="middle" class="txt sm">${esc(p.r.target)}</text><path class="sk red" stroke-width="9" d="M545 348 L715 400 M715 348 L545 400"/></g><g class="step" data-step="4"><text x="500" y="450" class="txt blueT">${esc(p.r.effect)}</text></g><g class="step" data-step="5"><path class="sk teal draw" pathLength="1" d="M465 470 L675 470 M650 454 L678 470 L650 486"/></g><g class="step" data-step="6"><circle cx="745" cy="470" r="42" class="sk green draw fillG" pathLength="1"/><text x="745" y="478" text-anchor="middle" class="txt greenT">⚡</text></g><g class="step" data-step="7"><rect x="515" y="500" width="310" height="50" rx="12" class="fillG box"/><text x="670" y="532" text-anchor="middle" class="txt sm greenT">${esc(p.r.result)}</text></g></svg>`;}
+  let current=0,timer=null,p=null;
+  function render(n){current=Math.max(0,Math.min(7,n)); canvas.querySelectorAll('.step').forEach((e,i)=>e.classList.toggle('visible',i<=current)); [...cards.children].forEach((e,i)=>e.classList.toggle('active',i===current)); bar.style.width=((current+1)/8*100)+'%';}
+  function load(){p=plan(input.value); title.textContent=p.title; canvas.innerHTML=svg(p); cards.innerHTML=p.steps.map((s,i)=>`<div class="card"><span class="num">${i+1}</span><div class="thumb">${p.thumbs[i]}</div><div class="ct">${esc(s)}</div></div>`).join(''); head.textContent=`CÁC BƯỚC VẼ (8/8) · ${p.r.assets.join(' + ')}`; [...cards.children].forEach((e,i)=>e.onclick=()=>render(i)); render(0); status.textContent=`FREE ENGINE · assets: ${p.r.assets.join(' + ')} · auto-layout OK`;}
+  btn.onclick=()=>{btn.disabled=true;btn.textContent='Đang ráp SVG…';load();setTimeout(()=>{btn.disabled=false;btn.textContent='✦ Generate FREE';},350)}; prev.onclick=()=>render(current-1); next.onclick=()=>render(current+1); play.onclick=()=>{if(timer){clearInterval(timer);timer=null;play.textContent='▶ Play';return} current=-1;timer=setInterval(()=>{if(current>=7){clearInterval(timer);timer=null;play.textContent='▶ Play';return}render(current+1)},950);play.textContent='⏸ Pause'}; btn.textContent='✦ Generate FREE'; load();
 })();
