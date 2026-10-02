@@ -1,0 +1,52 @@
+name: Import SRT Whiteboard Animation
+
+on:
+  push:
+    branches:
+      - import/srt-whiteboard-animation
+    paths:
+      - .github/workflows/import-srt-whiteboard-animation.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout MEDUS Video Factory
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone upstream repository
+        run: |
+          rm -rf /tmp/srt-whiteboard-animation
+          git clone --depth 1 https://github.com/geeklee/srt-whiteboard-animation.git /tmp/srt-whiteboard-animation
+
+      - name: Copy upstream into skills folder
+        run: |
+          mkdir -p skills/srt-whiteboard-animation
+          rsync -a --delete --exclude '.git' /tmp/srt-whiteboard-animation/ skills/srt-whiteboard-animation/
+          UPSTREAM_SHA="$(git -C /tmp/srt-whiteboard-animation rev-parse HEAD)"
+          cat > skills/srt-whiteboard-animation/UPSTREAM_MEDUS.md <<EOF
+          # Upstream source
+
+          Imported from: https://github.com/geeklee/srt-whiteboard-animation
+
+          Upstream commit: \`${UPSTREAM_SHA}\`
+
+          This folder is vendored into MEDUS Video Factory for evaluation/integration. The upstream MIT LICENSE is preserved unchanged.
+          EOF
+
+      - name: Commit imported repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skills/srt-whiteboard-animation
+          if git diff --cached --quiet; then
+            echo "No import changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: import srt whiteboard animation skill"
+          git push origin HEAD:import/srt-whiteboard-animation
